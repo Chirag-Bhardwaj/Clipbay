@@ -36,6 +36,13 @@ enum Enrichment {
               let url = URL(string: s.lowercased().hasPrefix("www.") ? "https://" + s : s),
               URLSafety.isPublicWebURL(url) else { return }
         let id = item.id
+        Task { @MainActor in
+            guard await URLSafety.resolvesPublic(url) else { return }
+            fetchMetadata(url, id: id)
+        }
+    }
+
+    private static func fetchMetadata(_ url: URL, id: UUID) {
         let provider = LPMetadataProvider()
         provider.timeout = 12
         provider.startFetchingMetadata(for: url) { meta, _ in
@@ -169,6 +176,36 @@ enum URLSafety {
             return false
         }
         return true
+    }
+
+    /// Resolves the host (off the main thread) and requires every address it maps to be public.
+    /// Not proof against DNS rebinding, but stops names that simply point at local machines.
+    static func resolvesPublic(_ url: URL) async -> Bool {
+        guard isPublicWebURL(url), let host = url.host else { return false }
+        return await Task.detached(priority: .utility) { () -> Bool in
+            var hints = addrinfo(ai_flags: 0, ai_family: AF_UNSPEC, ai_socktype: SOCK_STREAM, ai_protocol: 0,
+                                 ai_addrlen: 0, ai_canonname: nil, ai_addr: nil, ai_next: nil)
+            var res: UnsafeMutablePointer<addrinfo>?
+            guard getaddrinfo(host, nil, &hints, &res) == 0, let first = res else { return false }
+            defer { freeaddrinfo(first) }
+            var any = false
+            var p: UnsafeMutablePointer<addrinfo>? = first
+            while let ai = p {
+                if ai.pointee.ai_family == AF_INET, let sa = ai.pointee.ai_addr {
+                    let addr = sa.withMemoryRebound(to: sockaddr_in.self, capacity: 1) { $0.pointee.sin_addr }
+                    let bytes = withUnsafeBytes(of: addr) { Data($0) }
+                    guard let v4 = IPv4Address(bytes), isPublic(v4) else { return false }
+                    any = true
+                } else if ai.pointee.ai_family == AF_INET6, let sa = ai.pointee.ai_addr {
+                    let addr = sa.withMemoryRebound(to: sockaddr_in6.self, capacity: 1) { $0.pointee.sin6_addr }
+                    let bytes = withUnsafeBytes(of: addr) { Data($0) }
+                    guard let v6 = IPv6Address(bytes), isPublic(v6) else { return false }
+                    any = true
+                }
+                p = ai.pointee.ai_next
+            }
+            return any
+        }.value
     }
 
     static func isPublic(_ a: IPv4Address) -> Bool {

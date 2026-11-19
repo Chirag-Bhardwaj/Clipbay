@@ -193,7 +193,10 @@ struct WebPreview: NSViewRepresentable {
         let w = WKWebView(frame: .zero, configuration: cfg)
         context.coordinator.host = url.host?.lowercased()
         w.navigationDelegate = context.coordinator
-        if URLSafety.isPublicWebURL(url) { w.load(URLRequest(url: url)) }
+        let target = url
+        Task { @MainActor [weak w] in
+            if await URLSafety.resolvesPublic(target) { w?.load(URLRequest(url: target)) }
+        }
         return w
     }
     func updateNSView(_ v: WKWebView, context: Context) {}
