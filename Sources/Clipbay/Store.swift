@@ -59,6 +59,8 @@ final class ClipStore {
         try? fm.removeItem(at: trashDir)
         try? fm.createDirectory(at: trashDir, withIntermediateDirectories: true)
         try? fm.createDirectory(at: inboxDir, withIntermediateDirectories: true)
+        try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: inboxDir.path)
+        try? fm.setAttributes([.posixPermissions: 0o700], ofItemAtPath: Paths.localRoot.path)
         switchRoot(to: Paths.activeRoot, merge: false)
     }
 
@@ -174,7 +176,7 @@ final class ClipStore {
     func blobURL(_ id: UUID, _ name: String) -> URL { blobDir(id).appendingPathComponent(name) }
 
     func data(_ item: ClipItem, type: String) -> Data? {
-        guard let name = item.reps[type] else { return nil }
+        guard let name = item.reps[type], name == Paths.safeName(name), !name.isEmpty else { return nil }
         return try? Data(contentsOf: blobURL(item.id, name))
     }
 
@@ -432,8 +434,11 @@ final class ClipStore {
     func importInbox() {
         let fm = FileManager.default
         guard let files = try? fm.contentsOfDirectory(at: inboxDir, includingPropertiesForKeys: nil) else { return }
+        let enabled = Settings.shared.mcpEnabled
         for f in files where f.pathExtension == "json" {
             defer { try? fm.removeItem(at: f) }
+            // Only accept AI-tool saves while MCP is turned on; drop oversized payloads.
+            guard enabled, ((try? f.resourceValues(forKeys: [.fileSizeKey]))?.fileSize ?? 0) < 1_000_000 else { continue }
             guard let data = try? Data(contentsOf: f),
                   let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                   let text = obj["text"] as? String else { continue }

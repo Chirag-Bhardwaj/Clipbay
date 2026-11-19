@@ -33,7 +33,7 @@ enum Enrichment {
     static func linkPreview(_ item: ClipItem) {
         guard Settings.shared.fetchLinkPreviews, let s = item.url,
               let url = URL(string: s.lowercased().hasPrefix("www.") ? "https://" + s : s),
-              ["http", "https"].contains(url.scheme?.lowercased() ?? "") else { return }
+              URLSafety.isPublicWebURL(url) else { return }
         let id = item.id
         let provider = LPMetadataProvider()
         provider.timeout = 12
@@ -148,5 +148,25 @@ enum ImageCache {
         guard let i = NSImage(contentsOf: url) else { return nil }
         cache.setObject(i, forKey: key)
         return i
+    }
+}
+
+/// Keeps automatic fetches (link previews, Quick Look pages) away from local/private network hosts.
+enum URLSafety {
+    static func isPublicWebURL(_ url: URL) -> Bool {
+        guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
+              url.user == nil, url.password == nil,
+              let host = url.host?.lowercased(), !host.isEmpty else { return false }
+        if host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local")
+            || host.hasSuffix(".internal") || host.hasSuffix(".lan") || !host.contains(".") && !host.contains(":") { return false }
+        let v4 = host.split(separator: ".").compactMap { Int($0) }
+        if v4.count == 4 {
+            let (a, b) = (v4[0], v4[1])
+            if a == 10 || a == 127 || a == 0 || (a == 169 && b == 254) || (a == 172 && (16...31).contains(b))
+                || (a == 192 && b == 168) || (a == 100 && (64...127).contains(b)) { return false }
+        }
+        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+        if bare.contains(":") && (bare == "::1" || bare.hasPrefix("fe80") || bare.hasPrefix("fc") || bare.hasPrefix("fd")) { return false }
+        return true
     }
 }

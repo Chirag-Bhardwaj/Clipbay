@@ -217,7 +217,11 @@ final class ShelfController: NSObject, NSWindowDelegate {
     private func handle(_ e: NSEvent) -> Bool {
         if ProcessInfo.processInfo.environment["CLIPBAY_DEBUG"] != nil || CommandLine.arguments.contains("--debug") {
             let line = "key type=\(e.type.rawValue) code=\(e.keyCode) flags=\(e.modifierFlags.rawValue)\n"
-            if let h = FileHandle(forWritingAtPath: "/tmp/clipbay-debug.log") { h.seekToEndOfFile(); h.write(Data(line.utf8)); h.closeFile() }
+            let path = Paths.localRoot.appendingPathComponent("debug.log").path
+            if !FileManager.default.fileExists(atPath: path) {
+                FileManager.default.createFile(atPath: path, contents: nil, attributes: [.posixPermissions: 0o600])
+            }
+            if let h = FileHandle(forWritingAtPath: path) { h.seekToEndOfFile(); h.write(Data(line.utf8)); h.closeFile() }
         }
         if e.type == .flagsChanged {
             let held = e.modifierFlags.contains(Settings.shared.quickPasteModifier.flag)
