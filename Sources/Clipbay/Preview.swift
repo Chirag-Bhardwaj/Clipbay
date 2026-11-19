@@ -191,6 +191,7 @@ struct WebPreview: NSViewRepresentable {
         let cfg = WKWebViewConfiguration()
         cfg.websiteDataStore = .nonPersistent() // no cookies or storage kept from previews
         let w = WKWebView(frame: .zero, configuration: cfg)
+        context.coordinator.host = url.host?.lowercased()
         w.navigationDelegate = context.coordinator
         if URLSafety.isPublicWebURL(url) { w.load(URLRequest(url: url)) }
         return w
@@ -199,15 +200,27 @@ struct WebPreview: NSViewRepresentable {
     func makeCoordinator() -> Coordinator { Coordinator() }
 
     final class Coordinator: NSObject, WKNavigationDelegate {
+        var host: String?
+
+        /// Same site as the previewed link (allows www./apex and subdomain redirects).
+        func sameSite(_ u: URL) -> Bool {
+            guard let h = u.host?.lowercased(), let base = host else { return false }
+            let strip: (String) -> String = { $0.hasPrefix("www.") ? String($0.dropFirst(4)) : $0 }
+            let a = strip(h), b = strip(base)
+            return a == b || a.hasSuffix("." + b) || b.hasSuffix("." + a)
+        }
+
         func webView(_ webView: WKWebView, decidePolicyFor action: WKNavigationAction,
                      decisionHandler: @escaping @MainActor (WKNavigationActionPolicy) -> Void) {
             // Allow redirects/subresources to public hosts only; clicks open in the real browser.
             guard let u = action.request.url, URLSafety.isPublicWebURL(u) else { decisionHandler(.cancel); return }
             if action.navigationType == .linkActivated {
-                NSWorkspace.shared.open(u)
+                NSWorkspace.shared.open(u) // user clicked: hand off to their browser
                 decisionHandler(.cancel)
+            } else if action.targetFrame?.isMainFrame == false || sameSite(u) {
+                decisionHandler(.allow)   // embedded frames, or redirects within the same site
             } else {
-                decisionHandler(.allow)
+                decisionHandler(.cancel)  // automatic cross-site navigation of the preview is blocked
             }
         }
     }

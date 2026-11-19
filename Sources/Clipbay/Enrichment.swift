@@ -1,4 +1,5 @@
 import AppKit
+import Network
 import Vision
 import LinkPresentation
 import QuickLookThumbnailing
@@ -156,17 +157,41 @@ enum URLSafety {
     static func isPublicWebURL(_ url: URL) -> Bool {
         guard let scheme = url.scheme?.lowercased(), scheme == "http" || scheme == "https",
               url.user == nil, url.password == nil,
-              let host = url.host?.lowercased(), !host.isEmpty else { return false }
-        if host == "localhost" || host.hasSuffix(".localhost") || host.hasSuffix(".local")
-            || host.hasSuffix(".internal") || host.hasSuffix(".lan") || !host.contains(".") && !host.contains(":") { return false }
-        let v4 = host.split(separator: ".").compactMap { Int($0) }
-        if v4.count == 4 {
-            let (a, b) = (v4[0], v4[1])
-            if a == 10 || a == 127 || a == 0 || (a == 169 && b == 254) || (a == 172 && (16...31).contains(b))
-                || (a == 192 && b == 168) || (a == 100 && (64...127).contains(b)) { return false }
+              var host = url.host?.lowercased(), !host.isEmpty else { return false }
+        host = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]."))
+        if let v6 = IPv6Address(host) { return isPublic(v6) }
+        if let v4 = IPv4Address(host), host.split(separator: ".").count == 4 { return isPublic(v4) }
+        // Anything numeric-looking that isn't a plain dotted quad (e.g. 2130706433, 0x7f.1, 127.1) is rejected.
+        let labels = host.split(separator: ".")
+        if labels.last.map({ $0.allSatisfy { $0.isNumber } || $0.hasPrefix("0x") }) ?? true { return false }
+        if host == "localhost" || !host.contains(".") { return false }
+        for suffix in [".localhost", ".local", ".internal", ".lan", ".home.arpa", ".intranet", ".corp"] where host.hasSuffix(suffix) {
+            return false
         }
-        let bare = host.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
-        if bare.contains(":") && (bare == "::1" || bare.hasPrefix("fe80") || bare.hasPrefix("fc") || bare.hasPrefix("fd")) { return false }
+        return true
+    }
+
+    static func isPublic(_ a: IPv4Address) -> Bool {
+        let b = [UInt8](a.rawValue)
+        guard b.count == 4 else { return false }
+        switch (b[0], b[1]) {
+        case (0, _), (10, _), (127, _), (169, 254), (192, 168), (255, _): return false
+        case (172, 16...31), (100, 64...127), (198, 18...19): return false
+        case (224...239, _): return false
+        default: return !(b[0] == 192 && b[1] == 0 && b[2] == 0)
+        }
+    }
+
+    static func isPublic(_ a: IPv6Address) -> Bool {
+        let b = [UInt8](a.rawValue)
+        guard b.count == 16 else { return false }
+        if b.allSatisfy({ $0 == 0 }) || (b[0..<15].allSatisfy { $0 == 0 } && b[15] == 1) { return false } // :: and ::1
+        if b[0] == 0xfe && (b[1] & 0xc0) == 0x80 { return false } // link-local fe80::/10
+        if (b[0] & 0xfe) == 0xfc { return false }                  // unique local fc00::/7
+        if b[0] == 0xff { return false }                           // multicast
+        // IPv4-mapped (::ffff:a.b.c.d) and IPv4-compatible (::a.b.c.d): judge the embedded IPv4.
+        if b[0..<10].allSatisfy({ $0 == 0 }) && ((b[10] == 0xff && b[11] == 0xff) || (b[10] == 0 && b[11] == 0)),
+           let v4 = IPv4Address(Data(b[12..<16])) { return isPublic(v4) }
         return true
     }
 }
