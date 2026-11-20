@@ -10,8 +10,8 @@ struct StackEntry: Identifiable, Equatable {
 
 /// A temporary ordered queue: everything copied goes in, each ⌘V pastes the top item and removes it.
 @MainActor @Observable
-final class PasteStack {
-    static let shared = PasteStack()
+final class ClipbayStack {
+    static let shared = ClipbayStack()
 
     var entries: [StackEntry] = []
     var isActive = false
@@ -88,7 +88,7 @@ final class PasteStack {
         keyMonitor = NSEvent.addGlobalMonitorForEvents(matching: .keyDown) { e in
             let flags = e.modifierFlags.intersection([.command, .shift, .option, .control])
             guard flags == .command, e.charactersIgnoringModifiers?.lowercased() == "v" else { return }
-            DispatchQueue.main.async { PasteStack.shared.userPasted() }
+            DispatchQueue.main.async { ClipbayStack.shared.userPasted() }
         }
     }
 
@@ -214,14 +214,14 @@ final class PasteStack {
 }
 
 struct StackView: View {
-    var stack = PasteStack.shared
+    var stack = ClipbayStack.shared
     @State private var hovered: UUID?
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 8) {
                 Image(systemName: "square.stack.3d.up.fill").foregroundStyle(Color.accentColor)
-                Text("Paste Stack").font(.system(size: 13, weight: .semibold))
+                Text("Clipbay Stack").font(.system(size: 13, weight: .semibold))
                 Text("\(stack.entries.count)").font(.system(size: 11, weight: .bold)).foregroundStyle(.secondary)
                 Spacer()
                 Button { stack.undo() } label: { Image(systemName: "arrow.uturn.backward") }
@@ -272,7 +272,7 @@ struct StackView: View {
                 _ = p.loadObject(ofClass: NSString.self) { s, _ in
                     guard let s = s as? NSString else { return }
                     DispatchQueue.main.async {
-                        if let item = DropImporter.importObjects([s], pinTo: nil) { PasteStack.shared.add([item]) }
+                        if let item = DropImporter.importObjects([s], pinTo: nil) { ClipbayStack.shared.add([item]) }
                     }
                 }
             }
@@ -306,7 +306,7 @@ struct StackRow: View {
             }
             Spacer(minLength: 0)
             if hovered {
-                Button { PasteStack.shared.remove(entry) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
+                Button { ClipbayStack.shared.remove(entry) } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
                     .buttonStyle(.plain)
             } else if isTop {
                 Text("⌘V").font(.system(size: 10, weight: .bold)).padding(.horizontal, 5).padding(.vertical, 2)

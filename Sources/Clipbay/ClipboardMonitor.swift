@@ -7,7 +7,7 @@ final class ClipboardMonitor {
     private var ownChanges = Set<Int>()
     private var timer: Timer?
 
-    /// Called for every captured item (used by Paste Stack).
+    /// Called for every captured item (used by Clipbay Stack).
     var onCapture: ((ClipItem) -> Void)?
 
     static let concealed = NSPasteboard.PasteboardType("org.nspasteboard.ConcealedType")

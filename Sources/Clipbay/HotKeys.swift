@@ -118,10 +118,10 @@ enum HotKeys {
         let c = HotKeyCenter.shared
         c.install()
         c.register(1, s.activateHotKey) { ShelfController.shared.toggle() }
-        c.register(2, s.stackHotKey) { PasteStack.shared.hotKeyPressed() }
+        c.register(2, s.stackHotKey) { ClipbayStack.shared.hotKeyPressed() }
         // Only claim the "paste whole stack" shortcut while a stack is open.
-        if PasteStack.shared.isActive {
-            c.register(3, s.pasteAllHotKey) { PasteStack.shared.pasteAll() }
+        if ClipbayStack.shared.isActive {
+            c.register(3, s.pasteAllHotKey) { ClipbayStack.shared.pasteAll() }
         } else {
             c.unregister(3)
         }

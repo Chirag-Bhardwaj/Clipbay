@@ -324,7 +324,7 @@ final class ShelfController: NSObject, NSWindowDelegate {
                 Settings.shared.isPaused ? Settings.shared.resume() : Settings.shared.pause(for: nil)
                 Toast.show(Settings.shared.isPaused ? "Clipbay paused" : "Clipbay resumed"); return true
             case "p":
-                if !state.selection.isEmpty { PasteStack.shared.add(state.selectedItems); hide() }; return true
+                if !state.selection.isEmpty { ClipbayStack.shared.add(state.selectedItems); hide() }; return true
             case ",":
                 hide(animated: false); SettingsController.shared.show(); return true
             case "q":

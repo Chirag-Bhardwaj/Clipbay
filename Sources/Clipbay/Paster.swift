@@ -73,8 +73,8 @@ enum Paster {
         } else {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { sendKey(UInt16(kVK_ANSI_V)) }
         }
-        if PasteStack.shared.isActive {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { PasteStack.shared.loadTop() }
+        if ClipbayStack.shared.isActive {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { ClipbayStack.shared.loadTop() }
         }
     }
 
@@ -111,7 +111,7 @@ enum Paster {
         return nil
     }
 
-    /// When we last synthesized a keystroke (so the Paste Stack ignores our own ⌘V).
+    /// When we last synthesized a keystroke (so the Clipbay Stack ignores our own ⌘V).
     static var lastSynthetic = Date.distantPast
 
     static func sendKey(_ fallbackCode: UInt16, command: Bool = true) {

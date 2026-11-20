@@ -27,9 +27,9 @@ enum Snapshot {
             }
             state.selection = [first.id]
         }
-        PasteStack.shared.entries = ClipStore.shared.items.prefix(4).map { StackEntry(item: $0) }
+        ClipbayStack.shared.entries = ClipStore.shared.items.prefix(4).map { StackEntry(item: $0) }
         render(StackView(), size: NSSize(width: 300, height: 320), to: out.appendingPathComponent("stack.png"))
-        PasteStack.shared.entries = []
+        ClipbayStack.shared.entries = []
         for t in SettingsTab.allCases {
             SettingsTabState.shared.tab = t
             render(SettingsView(), size: NSSize(width: 640, height: 500), to: out.appendingPathComponent("settings-\(t.rawValue).png"))

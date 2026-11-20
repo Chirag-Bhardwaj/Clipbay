@@ -156,7 +156,7 @@ struct ShortcutSettings: View {
         Form {
             Section("Global shortcuts") {
                 LabeledContent("Activate Clipbay") { ShortcutRecorder(combo: $s.activateHotKey) }
-                LabeledContent("Activate Paste Stack") { ShortcutRecorder(combo: $s.stackHotKey) }
+                LabeledContent("Activate Clipbay Stack") { ShortcutRecorder(combo: $s.stackHotKey) }
                 LabeledContent("Paste entire stack") { ShortcutRecorder(combo: $s.pasteAllHotKey) }
             }
             Section("In Clipbay") {
@@ -189,7 +189,7 @@ struct ShortcutTable: View {
         ("⌘C", "Copy selected"), ("Space", "Quick Look"), ("⌘O", "Open link or file"),
         ("⌘E", "Edit"), ("⌘R", "Rename"), ("⌘N", "New text item"), ("⌫", "Delete"), ("⌘Z", "Undo delete"),
         ("⌘F", "Search / show filters"), ("⇥", "Switch between search and items"), ("⌘G", "Show item in its list"),
-        ("⌘← ⌘→", "Previous / next pinboard"), ("⇧⌘N", "New pinboard"), ("⌘P", "Add to Paste Stack"),
+        ("⌘← ⌘→", "Previous / next pinboard"), ("⇧⌘N", "New pinboard"), ("⌘P", "Add to Clipbay Stack"),
         ("⌘T", "Pause / resume"), ("⌘,", "Settings"), ("⎋", "Close"),
     ]
     var body: some View {

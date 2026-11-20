@@ -107,7 +107,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let open = menu.addItem(withTitle: "Open Clipbay", action: #selector(openShelf), keyEquivalent: "")
         open.target = self
         open.toolTip = s.activateHotKey.display
-        menu.addItem(withTitle: "Open Paste Stack", action: #selector(openStack), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "Open Clipbay Stack", action: #selector(openStack), keyEquivalent: "").target = self
         menu.addItem(.separator())
         if s.isPaused {
             menu.addItem(withTitle: s.pauseDescription, action: nil, keyEquivalent: "").isEnabled = false
@@ -132,7 +132,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     @objc func openShelf() { DispatchQueue.main.async { ShelfController.shared.show() } }
-    @objc func openStack() { PasteStack.shared.start(captureSelection: false) }
+    @objc func openStack() { ClipbayStack.shared.start(captureSelection: false) }
     @objc func resume() { Settings.shared.resume() }
     @objc func pauseFor(_ sender: NSMenuItem) {
         let secs = sender.representedObject as? Double ?? -1
@@ -181,7 +181,7 @@ struct WelcomeView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Label("Pick an item and press ↩ to paste it straight into the app you’re using.", systemImage: "arrow.turn.down.left")
                 Label("Pin snippets, links and images to colored pinboards.", systemImage: "pin")
-                Label("Press ⇧⌘C to collect a Paste Stack, then ⌘V them one by one.", systemImage: "square.stack.3d.up")
+                Label("Press ⇧⌘C to collect a Clipbay Stack, then ⌘V them one by one.", systemImage: "square.stack.3d.up")
             }
             .font(.callout)
             .frame(maxWidth: 420, alignment: .leading)

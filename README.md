@@ -34,7 +34,7 @@ Grant **Accessibility** when asked (System Settings › Privacy & Security › A
 - **Pinboards**: named, colored lists that never expire. Pin via context menu or drag a card onto a tab; reorder boards and items by dragging; drop content from other apps onto a board.
 - **Search & filters**: live search across history and pinboards with highlighted matches; filter tokens for type, source app, and date (typed suggestions or the filter menu).
 - **Quick Look**: full text, images (rotate, copy recognized text), live web page for links, Quick Look for files, HEX/RGB/HSB for colors.
-- **Paste Stack** (⇧⌘C): collect items, then each ⌘V pastes the next one. Reorder, reverse, plain-text toggle, undo, and Paste All (⌃⌥⌘V).
+- **Clipbay Stack** (⇧⌘C): collect items, then each ⌘V pastes the next one. Reorder, reverse, plain-text toggle, undo, and Paste All (⌃⌥⌘V).
 - **Suggestions**: ranks items by what you usually paste into the current app.
 - **Privacy**: ignore apps, skip confidential (passwords) and transient content, pause for a set time.
 - **Retention**: 1 day / week / month / year / forever (pinned items are kept), plus Erase History.

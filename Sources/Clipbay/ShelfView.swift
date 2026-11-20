@@ -113,9 +113,9 @@ struct TopBar: View {
                     .buttonStyle(.plain)
                     .help("Clipbay is paused. Click to resume.")
                 }
-                if PasteStack.shared.isActive {
-                    Button { PasteStack.shared.showPanel() } label: {
-                        Label("\(PasteStack.shared.entries.count)", systemImage: "square.stack.3d.up.fill")
+                if ClipbayStack.shared.isActive {
+                    Button { ClipbayStack.shared.showPanel() } label: {
+                        Label("\(ClipbayStack.shared.entries.count)", systemImage: "square.stack.3d.up.fill")
                             .font(.system(size: 11, weight: .semibold))
                     }
                     .buttonStyle(.plain)
@@ -302,7 +302,7 @@ struct MoreMenu: View {
             Button("New Text Item") { state.modal = .newItem }
             Button("New Pinboard…") { state.modal = .newPinboard(pinning: []) }
             Divider()
-            Button("Open Paste Stack") { ShelfController.shared.hide(); PasteStack.shared.start(captureSelection: false) }
+            Button("Open Clipbay Stack") { ShelfController.shared.hide(); ClipbayStack.shared.start(captureSelection: false) }
             if settings.isPaused {
                 Button("Resume Clipbay") { settings.resume() }
             } else {
@@ -463,7 +463,7 @@ struct CardMenu: View {
         if item.pinboardID != nil {
             Button("Unpin") { store.unpin(targets.map(\.id)) }
         }
-        Button("Add to Paste Stack") { PasteStack.shared.add(targets); ShelfController.shared.hide() }
+        Button("Add to Clipbay Stack") { ClipbayStack.shared.add(targets); ShelfController.shared.hide() }
         Divider()
         Button("Rename…") { state.select(item.id, in: state.visibleItems); state.modal = .rename(item.id) }
         if item.kind != .image && item.kind != .file {
